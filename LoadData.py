@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.model_selection import train_test_split
 
+# finds relative path of data files
 def createPath():
     datadir = './data/'
     datasets = os.listdir(datadir)
@@ -23,6 +24,7 @@ def createPath():
             j += 1
     return train,test
 
+# converts compressed data to numpy array
 def loadData(datadic):
     trainTest = {'data' : None, 'label': None}
     for i in range(0,2):
@@ -35,6 +37,7 @@ def loadData(datadic):
         f.close()
     return trainTest
 
+# splits data into train/val or returns test data
 def trainvalsplit(trainortest):
     train, test = createPath()
     if trainortest == 'train':
@@ -45,5 +48,3 @@ def trainvalsplit(trainortest):
         return train_test_split(train,trainlabels, test_size = 0.2)
     else:
         return loadData(test)
-
-
