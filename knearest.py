@@ -7,10 +7,12 @@ from cuml.neighbors import KNeighborsClassifier as cuKNN
    
 data, val, datalabel, vallabel = ld.trainvalsplit('train')
 
-k = 10
+k = 5
 knearest = cuKNN(n_neighbors = k)
 knearest.fit(data,datalabel)
 predictions = knearest.predict(val)
+confusion = confusion_matrix(vallabel, predictions)
+print(confusion)
 
 
 
