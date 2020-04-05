@@ -42,4 +42,4 @@ def kfold(classifier, val, vallabel, folds):
     return scores.mean(), scores.std() **2
 
 def crossValidation(classifier,validationData, validationLabels, folds):
-    kfold(classifier, validationData, validationLabels, folds)
+    return kfold(classifier, validationData, validationLabels, folds)
