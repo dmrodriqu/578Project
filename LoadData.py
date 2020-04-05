@@ -2,7 +2,6 @@ import gzip
 import io
 import numpy as np
 import struct
-import matplotlib.pyplot as plt
 import os
 from sklearn.model_selection import train_test_split
 
