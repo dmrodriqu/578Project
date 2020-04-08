@@ -46,23 +46,3 @@ def calculatePValue(numbersamples, numbergroups, ssresid, ssexplained):
     pval = 1- F.cdf(fScore, dfex, df)
     
     return meansquaresres, meansquaresEx, fScore, pval
-
-
-A = [12.6, 12, 11.8, 11.9, 13, 12.5, 14]
-B = [10, 10.2, 10, 12, 14, 13]
-C = [10.1, 13, 13.4, 12.9, 8.9, 10.7, 13.6, 12]
-population = np.array([np.array(A),np.array(B), np.array(C)])
-
-popcon, groupMeans, u, numbergroups, numbersamples = createGroups(population)
-ss = sumSquares(popcon)
-ssresid = sumSquaresResid(population, groupMeans)
-sse = totss(population, groupMeans)
-msres, msex, fscore, p = calculatePValue(numbersamples, numbergroups, ssresid, sse)
-
-print(ss)
-print(ssresid)
-print(sse)
-print(msres)
-print(msex)
-print(fscore)
-print(p)
