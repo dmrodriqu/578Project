@@ -46,3 +46,12 @@ def calculatePValue(numbersamples, numbergroups, ssresid, ssexplained):
     pval = 1- F.cdf(fScore, dfex, df)
     
     return meansquaresres, meansquaresEx, fScore, pval
+
+
+def anova(population):
+    popcon, groupMeans, u, numbergroups, numbersamples = createGroups(population)
+    ss = sumSquares(popcon)
+    ssresid = sumSquaresResid(population, groupMeans)
+    sse = totss(population, groupMeans)
+    msres, msex, fscore, p = calculatePValue(numbersamples, numbergroups, ssresid, sse)
+    return ss, ssresid, sse, mres, msex, fscore, p
