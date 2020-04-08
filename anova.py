@@ -62,9 +62,7 @@ msres, msex, fscore, p = calculatePValue(numbersamples, numbergroups, ssresid, s
 print(ss)
 print(ssresid)
 print(sse)
-
 print(msres)
 print(msex)
 print(fscore)
 print(p)
-
