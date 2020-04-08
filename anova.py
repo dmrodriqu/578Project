@@ -44,6 +44,10 @@ def calculatePValue(numbersamples, numbergroups, ssresid, ssexplained):
     return meansquaresres, meansquaresEx, fScore, pval
 
 
+# anova function to calculate 1 way anova
+# take in population as array of group values
+# outputs mean square residual, mean square of groups, group sum of squares
+# f score, and p value
 def anova(population):
     popcon, groupMeans, u, numbergroups, numbersamples = createGroups(population)
     ss = sumSquares(popcon)
