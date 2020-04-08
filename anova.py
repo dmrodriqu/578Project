@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.stats import f as F
 
-
 # population mean
 def mean(population):
     popsum = sum(population)
@@ -38,13 +37,10 @@ def createGroups(population):
 def calculatePValue(numbersamples, numbergroups, ssresid, ssexplained):
     df = numbersamples - numbergroups
     meansquaresres = ssresid/df
-
     dfex = numbergroups - 1
     meansquaresEx = sse/dfex
-
     fScore = meansquaresEx/meansquaresres
     pval = 1- F.cdf(fScore, dfex, df)
-    
     return meansquaresres, meansquaresEx, fScore, pval
 
 
