@@ -60,15 +60,6 @@ def anova(population):
     return ss, ssresid, sse, msres, msex, fscore, p
 
 
-
-A = [12.6, 12, 11.8, 11.9, 13, 12.5, 14]
-B = [10, 10.2, 10, 12, 14, 13]
-C = [0.1, 1, 1, 1.9, 8.9, 1.7, 1.6, 12]
-D = [0.1, 12, 13, 1.9, .9, 1.7, 1.6, 12]
-
-
-
-population =  [np.array(A), np.array(B), np.array(C), np.array(D)]
 def ttest(s1, s2):
     # calculate means
     smu1 = s1.mean()
@@ -98,7 +89,6 @@ def ttest(s1, s2):
             print(oneTail)
             return 2
     return 0
-print(anova(population))
 
 def postHoc(population):
     winners = []
@@ -112,5 +102,4 @@ def postHoc(population):
         return postHoc(winners)
     else:
         return winners, losers
-print(postHoc(population)[0])
 
