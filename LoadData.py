@@ -30,7 +30,7 @@ def loadData(datadic):
         filename = '{:}{:}'.format('./data/', datadic[i])
         f = gzip.open(filename, 'rb')
         if i == 0:
-            trainTest['data'] = np.frombuffer(f.read(), np.uint8, offset=16).reshape(-1,28*28)
+            trainTest['data'] = (np.frombuffer(f.read(), np.uint8, offset=16).reshape(-1,28*28))/255
         else:
             trainTest['label'] = np.frombuffer(f.read(), np.uint8, offset=8)
         f.close()
@@ -47,3 +47,4 @@ def trainvalsplit(trainortest):
         return train_test_split(train,trainlabels, test_size = 0.2)
     else:
         return loadData(test)
+
