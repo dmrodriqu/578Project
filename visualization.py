@@ -69,8 +69,17 @@ def structData(filename, atr):
     return data
 
 '''
-mcc per folds
+getMCC gets mcc of all data
+input fold labels, fold predictions for all data
+      param 1                                           param2
+    [ [[labels fold 1] [labels fold 2] [labels fold 3]...] []]
+    same input for predictions
+
+output:
+    list of:
+        [[fold1mcc, fold2mcc ... fold k mcc]...[fold mcc for increment in parameter]]
 '''
+
 def getMCC(labels, predictions):
     predlen = len(predictions)
     return ([[accuracy(labels[i][k], predictions[i][k]) for k in range(len(predictions[i]))] for i in range(predlen)])
@@ -78,6 +87,7 @@ def getMCC(labels, predictions):
 
 '''
 confusion matrix per fold
+
 '''
 def getconfusionMatrix(labels, predictions):
     predlen = len(predictions)
@@ -86,15 +96,18 @@ def getconfusionMatrix(labels, predictions):
 
 predictions =structData(outfiles[0], 'pred')
 labels = structData(outfiles[0], 'truth')
-
+print(len(labels[0]))
 cc = getconfusionMatrix(labels, predictions)
-print(np.shape(cc[0][1]))
+# param
+allmcc = []
+for i in cc:
+    # fold
+    foldmcc = []
+    for j in i:
+        foldmcc.append(matthews(j))
+    allmcc.append(foldmcc)
 
 allmcc = getMCC(labels, predictions)
 fig, ax = plt.subplots(nrows=1, ncols = 1, figsize =(9,4))
 bpl = ax.boxplot(allmcc, vert = True)
 plt.show()
-
-
-    
-

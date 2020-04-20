@@ -61,3 +61,27 @@ def accuracy(labels, predictions):
             tot += 1
     return tot/n
 
+'''
+calculates matthews correlation coefficient from confusion matris
+
+input: np.mat(): confusion matrix
+output: float
+
+
+'''
+
+def matthews(cmat):
+    dim = np.shape(cmat)[0]
+    trues =  sum([cmat[:,i] for i in range(dim)])
+    preds = sum([cmat[i,:] for i in range(dim)])
+    n= sum(preds)
+    correct = sum([cmat[i,i] for i in range(dim)])
+    cordiff  = correct * n - sum([trues[i]*preds[i] for i in range(dim)]) 
+    cnormp = n ** 2 - sum([preds[i] ** 2 for i in range(len(preds))])
+    cnormt = n ** 2 - sum([trues[i] ** 2 for i in range(len(trues))])
+    res = cordiff/ (cnormp * cnormt)**(1/2)
+    if np.isnan(res):
+        return 0
+    else:
+        return res
+
