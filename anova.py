@@ -1,8 +1,9 @@
 import numpy as np
-from math import erf
+from math import erf, sqrt
 from scipy.stats import f as F
 from scipy.stats import t as T
 from itertools import combinations
+from statsmodels.stats.libqsturng import psturng, qsturng
 
 # population mean
 def mean(population):
@@ -103,3 +104,63 @@ def postHoc(population):
     else:
         return winners, losers
 
+
+def tukeyhsd(results, msres):
+    """
+    function tukeyhsd(results)
+    runs the Tukey HSD test on the results to find which of the population mean is statistically significantly
+    different from the others
+    :param results: a matrix where each row represents the data for one population. Type: list of (list of numbers)
+    :return: a list of lists, where each small list has two integers, i and j, which indicate that classifier i
+             and classifier j have means which are statistically significantly different
+    """
+
+    n, d = results.shape
+    # 1. Compute the absolute value of the difference of means of each pair of classes
+    diff_of_means = {}
+    for i in range(0, n - 1):
+        for j in range(i + 1, n):
+            diff_of_means[(i,j)] = (abs(results[i].mean() - results[j].mean()))
+    # 2. Compute the degrees of freedom
+    df = n*d - n
+    # 3. Fix an alpha
+    alpha = 0.05
+    # 4. Find out the q value from the Q table for Tukey's test
+    q = qsturng(1-alpha, n, df)
+    # 5. Compute critical range
+    qu = q*sqrt(msres/d)    # critical range = q*sqrt(MS_w/2 * (1/d + 1/d)) = q*sqrt(MS_w / d)
+    # 6. Find the pairs of classes whose absolute difference of means exceed the critical range
+    significantly_different_pairs = []
+    for key in diff_of_means:
+        if diff_of_means[key] > qu:
+            significantly_different_pairs.append(key)
+
+    return significantly_different_pairs
+
+
+def statistical_analysis(population):
+    """
+    performs the one-way ANOVA on the population first to see if the null hypothesis, i.e. the means of each sample
+    is the same, is rejected. If so, then the function performs the Tukey's HSD test to find out the pairs of samples
+    whose means are statistically significantly different from each other.
+
+    :param population: a matrix whose rows are the individual samples. Type: numpy matrix
+    :return: the index of the best sample. Type: int
+    """
+    ss, ssresid, sse, msres, msex, fscore, p = anova(population)
+    different_pairs = []
+    if p < 0.05:    # null hypothesis rejected, run Tukey's HSD to find samples with different means
+        different_pairs = tukeyhsd(population, msres)
+    ########################################################################
+    # need to determine and return the best sample (class) #
+    return different_pairs # this should be an integer, index of best class
+    ########################################################################
+
+
+# results = np.array([[7, 8, 15, 11, 9, 10],
+#            [12, 17, 13, 18, 19, 15],
+#            [14, 18, 19, 17, 16, 18],
+#            [19, 25, 22, 23, 18, 20]])
+#
+#
+# print(statistical_analysis(results))
