@@ -7,7 +7,6 @@ outfiles = ['results-KNN.txt', 'results-SVM.txt', 'results-NN.txt']
 processes output file for knn.
 input knn.txt
 output {neighbors (int): [[accuracy, multiclass precision]]
-'''
 
 def processknn():
     testfile = outfiles[0]
@@ -36,6 +35,7 @@ def processknn():
     return iters
 
 '''
+'''
 kn = processknn()
 boxplots(kn, precision = True, digit = 1)
 '''
@@ -60,14 +60,24 @@ def structData(filename, atr):
     linelist = s.splitlines()
     #print(linelist[55])
     data  = []
-    for k in range(0,15):
-        if atr == 'pred' or 'truth':
-            folds = [list(map(int, linelist[attrb[atr] + (55*k) + (i*10)].split(','))) for i in range(0,5)]
-        else:
-            folds = [linelist[attrb[atr] + (55*k) + (i*10)] for i in range(0,5)]
-        data.append(folds)
+    if filename == outfile[0]:
+        for k in range(0,15):
+            if (atr == 'pred') or (atr == 'truth'):
+                folds = [list(map(int, linelist[attrb[atr] + (55*k) + (i*10)].split(','))) for i in range(0,5)]
+            else:
+                folds = [linelist[attrb[atr] + (55*k) + (i*10)] for i in range(0,5)]
+            data.append(folds)
+    elif filename == outfile[1]:
+        for k in range(36):
+            fold = []
+            for i in range(5):
+                ix = attrb[atr] + 55*k + i * 10
+                current  = list(map(int, linelist[ix].split(',')))
+                fold.append(current)
+            data.append(fold)
     return data
 
+structData(outfiles[1], 'pred')
 '''
 getMCC gets mcc of all data
 input fold labels, fold predictions for all data
@@ -89,25 +99,27 @@ def getMCC(labels, predictions):
 confusion matrix per fold
 
 '''
+
 def getconfusionMatrix(labels, predictions):
     predlen = len(predictions)
     return ([[confusionMatrix(labels[i][k], predictions[i][k]) for k in range(len(predictions[i]))] for i in range(predlen)])
 
 
-predictions =structData(outfiles[0], 'pred')
-labels = structData(outfiles[0], 'truth')
-print(len(labels[0]))
-cc = getconfusionMatrix(labels, predictions)
-# param
-allmcc = []
-for i in cc:
-    # fold
-    foldmcc = []
-    for j in i:
-        foldmcc.append(matthews(j))
-    allmcc.append(foldmcc)
+def main():
+    predictions =structData(outfiles[1], 'pred')
+    labels = structData(outfiles[1], 'truth')
+    cc = getconfusionMatrix(labels, predictions)
+    # param
+    allmcc = []
+    for i in cc:
+        # fold
+        foldmcc = []
+        for j in i:
+            foldmcc.append(matthews(j))
+        allmcc.append(foldmcc)
 
-allmcc = getMCC(labels, predictions)
-fig, ax = plt.subplots(nrows=1, ncols = 1, figsize =(9,4))
-bpl = ax.boxplot(allmcc, vert = True)
-plt.show()
+    allmcc = getMCC(labels, predictions)
+    fig, ax = plt.subplots(nrows=1, ncols = 1, figsize =(9,4))
+    bpl = ax.boxplot(allmcc, vert = True)
+    plt.show()
+main()
