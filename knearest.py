@@ -16,6 +16,7 @@ def tuning(data, val, datalabel, vallabel):
         print("mean = {:}, variance = {:}".format(u, sig))
         meanvar.append([u,sig])
     return meanvar
+
 def tuning_nonGPU(data, val, datalabel, vallabel):
     meanvar = []
     for i in range(1, 15):
