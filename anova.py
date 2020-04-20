@@ -156,11 +156,11 @@ def statistical_analysis(population):
     return different_pairs # this should be an integer, index of best class
     ########################################################################
 
+'''
+results = np.array([[7, 8, 15, 11, 9, 10],
+            [12, 17, 13, 18, 19, 15],
+            [14, 18, 19, 17, 16, 18],
+            [19, 25, 22, 23, 18, 20]])
 
-# results = np.array([[7, 8, 15, 11, 9, 10],
-#            [12, 17, 13, 18, 19, 15],
-#            [14, 18, 19, 17, 16, 18],
-#            [19, 25, 22, 23, 18, 20]])
-#
-#
-# print(statistical_analysis(results))
+print(statistical_analysis(results))
+'''
