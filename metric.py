@@ -1,13 +1,14 @@
 import numpy as np
 from collections import Counter
+import random
+
 
 def confusionMatrix(labels, predictions, normalized = False):
     uniquelab = set(labels)
     llab = len(uniquelab)
     cmat = np.zeros((llab,llab))
     counts = Counter(labels)
-    print(counts)
-    for i in range(len(lab)):
+    for i in range(len(labels)):
         cmat[labels[i]-1, predictions[i]-1]+= 1
     if normalized:
         for i in range(len(cmat)):
@@ -29,7 +30,7 @@ def accuracy(labels, predictions):
     n = len(labels)
     tot = 0
     for i in range(n):
-        if lab[i] - pred[i] == 0:
+        if labels[i] - predictions[i] == 0:
             tot += 1
-    print(tot/n)
+    return tot/n
 
