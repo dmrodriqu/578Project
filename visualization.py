@@ -60,14 +60,14 @@ def structData(filename, atr):
     linelist = s.splitlines()
     #print(linelist[55])
     data  = []
-    if filename == outfile[0]:
+    if filename == outfiles[0]:
         for k in range(0,15):
             if (atr == 'pred') or (atr == 'truth'):
                 folds = [list(map(int, linelist[attrb[atr] + (55*k) + (i*10)].split(','))) for i in range(0,5)]
             else:
                 folds = [linelist[attrb[atr] + (55*k) + (i*10)] for i in range(0,5)]
             data.append(folds)
-    elif filename == outfile[1]:
+    elif filename == outfiles[1]:
         for k in range(36):
             fold = []
             for i in range(5):
@@ -77,7 +77,6 @@ def structData(filename, atr):
             data.append(fold)
     return data
 
-structData(outfiles[1], 'pred')
 '''
 getMCC gets mcc of all data
 input fold labels, fold predictions for all data
@@ -111,15 +110,27 @@ def main():
     cc = getconfusionMatrix(labels, predictions)
     # param
     allmcc = []
+    prec = []
+    rec = []
     for i in cc:
         # fold
         foldmcc = []
+        precisions = []
+        recalls = []
         for j in i:
             foldmcc.append(matthews(j))
+            precision, recall = precisionrecall(j)
+            # precision across all digits
+            precisions.append(precision[1].mean())
+            # recall across all digits
+            recalls.append(recall[1].mean())
+        prec.append(precisions)
+        rec.append(recalls)
         allmcc.append(foldmcc)
-
     allmcc = getMCC(labels, predictions)
-    fig, ax = plt.subplots(nrows=1, ncols = 1, figsize =(9,4))
-    bpl = ax.boxplot(allmcc, vert = True)
+    fig, ax = plt.subplots(nrows=3, ncols = 1, figsize =(9,4))
+    bpl = ax[0].boxplot(allmcc, vert = True)
+    bpl2 = ax[1].boxplot(prec, vert = True)
+    bpl2 = ax[2].boxplot(rec, vert = True)
     plt.show()
 main()
