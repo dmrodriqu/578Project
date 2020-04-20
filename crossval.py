@@ -71,6 +71,27 @@ def performance(actual_labels, predicted_labels, classes):
     return scores
 
 
+def confusion_mat(actual_labels, predicted_labels, classes):
+    """
+    computes the multiclass confusion matrix
+    :param actual_labels: actual labels for each data instance. Type: numpy array
+    :param predicted_labels: predicted labels for each data instance. Type: numpy array
+    :param classes: a list of all classes. Type: list
+    :return: confusion matrix. Type: numpy matrix
+    """
+    try:
+        assert actual_labels.shape == predicted_labels.shape
+    except:
+        print('the sizes of actual labels and predictions do not match')
+        return
+    mat = np.zeros((len(classes), len(classes)))
+    for k in classes:
+        for i in range(actual_labels.shape[0]):
+            if actual_labels[i] == k:
+                mat[k][predicted_labels[i]] += 1
+    return mat
+
+
 def kfold(classifier, data, labels, num_classes, k):
     """
     function kfold(classifier, val, vallabel, folds)
@@ -82,8 +103,7 @@ def kfold(classifier, data, labels, num_classes, k):
     :param labels: an array containing the true labels for the validation data (val). Type: numpy array
     :param num_classes: number of classes. Type: int
     :param k: number of folds for k-fold cross validation. Type: integer
-    :return: for each fold, the function writes data to a text file containing the true positives, false positives,
-             true negatives, and false negatives computed by the classifier after training for each class.
+    :return: Mathew's correlation coefficient computed for each fold. Type: numpy array
     """
     # split the data into folds many disjoint sets #
     n = data.shape[0]    # the total number of data points
@@ -112,12 +132,15 @@ def kfold(classifier, data, labels, num_classes, k):
         predictions = classifier.predict(data[validation_indices])
         # get the measure of the performance of the classifier #
         perf_measure = performance(labels[validation_indices], predictions, classes)
-
-        # # append mcc for evaluation
-        # scores[i] = mcc
-        # print(scores)
-        # store results
-
+        C = confusion_mat(labels[validation_indices], predictions, classes)
+        # use the confusion matrix to compute the multiclass Mathew's correlation coefficient #
+        t = np.sum(C, axis=1)   # t[j] := number of times class j truly occurred
+        p = np.sum(C, axis=0)   # p[j] := number of times class j was predicted
+        c = np.trace(C)         # c := total number of correct predictions
+        s = labels[validation_indices].shape[0]     # s:= total number of data points
+        mcc = (c * s) - np.dot(t, p) / np.sqrt((s ** 2 - np.sum(np.square(p))) * (s ** 2 - np.sum(np.square(t))))
+        scores[i] = mcc
+    return scores
     ############################################################################################################
     # # CODE USED TO WRITE DATA TO TEXT FILES
         # write the results to file #
@@ -126,8 +149,6 @@ def kfold(classifier, data, labels, num_classes, k):
         # validation_labels_to_write = [str(j) for j in validation_labels]
         # ofile.write('predictions:\n' + ','.join(predictions_to_write) + '\n\n')
         # ofile.write('actual labels:\n' + ','.join(validation_labels_to_write) + '\n\n')
-        # confusion = confusion_matrix(labels[validation_indices], predictions)
-        # mcc = matthews_corrcoef(labels[validation_indices], predictions)
     # ofile.write('\n' + '#' * 100 + '\n\n')
     # ofile.close()
     ############################################################################################################
@@ -186,13 +207,13 @@ def run():
     td = data[:dummy_size]
     tl = datalabel[:dummy_size]
 
-    cf1 = SVC(C=1, kernel='poly', degree=5, gamma=0.05)
-    cf2 = KNeighborsClassifier(n_neighbors=5)
-    cf3 = neural_network.MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(128,64), random_state=1)
+    # cf1 = SVC(C=1, kernel='poly', degree=5, gamma=0.05)
+    # cf2 = KNeighborsClassifier(n_neighbors=5)
+    # cf3 = neural_network.MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(128,64), random_state=1)
 
     # kfold(cf1, td, tl, 10, 5)
     # kfold(cf2, td, tl, 10, 5)
-    kfold(cf3, td, tl, 10, 5)
+    # kfold(cf3, td, tl, 10, 5)
     # nnet_sizes = [[784, 100, 10], [784, 200, 10], [784, 300, 10], [784, 400, 10], [784, 500, 10],
     #               [784, 300, 200, 10], [784, 300, 100, 10], [784, 500, 200, 10], [784, 500, 100, 10],
     #               [784, 128, 64, 10]]
@@ -212,7 +233,23 @@ def run():
     # start = time.time()
     # cf.fit(data, datalabel)
     # print((time.time()-start))
+    act = np.array([0, 1, 1, 2])
+    preds = np.array([0, 1, 2, 1])
+    act = np.random.randint(0,10,10000)
+    preds = np.random.randint(0,10,10000)
+    C = confusion_mat(act, preds, list(range(10)))
+    # print(C)
+    t = np.sum(C, axis=1)
+    p = np.sum(C, axis = 0)
+    c = np.trace(C)
+    s = act.shape[0]
 
+    numerator = (c*s) - np.dot(t, p)
+    den = np.sqrt((s**2 - np.sum(np.square(p))) * (s**2 - np.sum(np.square(t))))
+    mcc = numerator/den
+    print(mcc - matthews_corrcoef(act, preds))
+    # print(matthews_corrcoef(act, preds))
+    # print(confusion_matrix(act,preds))
 
 if __name__ == '__main__':
     run()
