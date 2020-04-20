@@ -24,6 +24,25 @@ def createix(folds):
     return np.array(foldarr)
 
 
+def write_to_file(classifier, perf_measure, fold_num, actual_labels, predictions, ofilename):
+    """
+    writes the performance of the classifier to a text file
+    :param classifier: the sklearn classifier. Type: one of skleran SVC, Multilayer Perceptron, or K-Nearest Neighbors
+    :param perf_measure: the data of true positives, false positives, true negatives, and false negatives. Type: dictionary
+    :param fold_num: number of the current fold. Type: int
+    :param actual_labels: the ground truth labels for the data set. Type: numpy array
+    :param predictions: the predicted labels for the data set. Type: numpy array
+    :param ofilename: output file name. Type: String
+    :return: None
+    """
+    ofile = open(ofilename, 'a+')
+    ofile.write(str(classifier) + "\n\n")
+    ofile.write("fold #: " + str(fold_num) + '\n\n')
+    ofile.write(str(perf_measure) + '\n\n')
+    ofile.write('predictions:\n' + ','.join([str(i) for i in predictions]) + '\n\n')
+    ofile.write('actual labels:\n' + ','.join([str(i) for i in actual_labels]) + '\n\n')
+    ofile.close()
+
 def performance(actual_labels, predicted_labels, classes):
     """
     takes the lists of predicted and actual labels for the whole dataset, along with the list of class labels
@@ -77,7 +96,7 @@ def confusion_mat(actual_labels, predicted_labels, classes):
     :param actual_labels: actual labels for each data instance. Type: numpy array
     :param predicted_labels: predicted labels for each data instance. Type: numpy array
     :param classes: a list of all classes. Type: list
-    :return: confusion matrix. Type: numpy matrix
+    :return: confusion matrix. The rows are the predictions, and the columns actual labels. Type: numpy matrix
     """
     try:
         assert actual_labels.shape == predicted_labels.shape
@@ -111,15 +130,6 @@ def kfold(classifier, data, labels, num_classes, k):
     all_indices = set(range(n))
     scores = np.array(np.zeros(k))
     classes = list(range(num_classes))
-    #################################################################################################
-    # CODE USED TO WRITE DATA TO TEXT FILES
-    # ofile = open('results.txt', 'a+')
-    # ofile.write("K-Nearest Neighbors. # of Clusters: " + str(classifier.n_neighbors) + '\n\n')
-    # ofile.write("NNET Size: " + ','.join([str(i) for i in nnet_sizes]) + '\n\n')
-    # ofile.write("C: " + str(classifier.C) + ", kernel: " + classifier.kernel
-    #             + ', degree: ' + str(classifier.degree)
-    #             + ', gamma: ' + str(classifier.gamma) + "\n\n")
-    ###################################################################################################
     for i in range(k):
         print("fold #: ", i)
         # ofile.write('fold #: ' + str(i) + '\n\n')
@@ -140,49 +150,9 @@ def kfold(classifier, data, labels, num_classes, k):
         s = labels[validation_indices].shape[0]     # s:= total number of data points
         mcc = (c * s) - np.dot(t, p) / np.sqrt((s ** 2 - np.sum(np.square(p))) * (s ** 2 - np.sum(np.square(t))))
         scores[i] = mcc
+        write_to_file(classifier, perf_measure, i, labels[validation_indices], predictions, 'results.txt')
     return scores
-    ############################################################################################################
-    # # CODE USED TO WRITE DATA TO TEXT FILES
-        # write the results to file #
-        # ofile.write(str(perf_measure) + '\n\n') # write the measures like true positive etc for each class
-        # predictions_to_write = [str(j) for j in predictions]
-        # validation_labels_to_write = [str(j) for j in validation_labels]
-        # ofile.write('predictions:\n' + ','.join(predictions_to_write) + '\n\n')
-        # ofile.write('actual labels:\n' + ','.join(validation_labels_to_write) + '\n\n')
-    # ofile.write('\n' + '#' * 100 + '\n\n')
-    # ofile.close()
-    ############################################################################################################
 
-'''
-def kfold(classifier, val, vallabel, folds):
-     ix = np.arange(len(val))
-     splits = np.array_split(ix, folds)
-     foldix = createix(folds)
-     # for every fold
-     scores = np.array(np.zeros(folds))
-     print(scores)
-     for i in range(len(foldix)):
-         # get the split ix
-         foldindices = foldix[i][1]
-         # get the indices of every datum in split
-         crossvalix = np.array(splits)[foldindices]
-         # train on this
-         validationData = val[np.concatenate(crossvalix)]
-         validationLabels = vallabel[np.concatenate(crossvalix)]
-         # test on this
-         leaveoneoutData = val[np.array(np.array(splits)[foldix[i][0]])]
-         leaveoneoutlabels = vallabel[np.array(np.array(splits)[foldix[i][0]])]
-         # call classifier
-         classifier.fit(validationData, validationLabels)
-         predictions = classifier.predict(leaveoneoutData)
-         confusion = confusion_matrix(leaveoneoutlabels, predictions)
-         mcc = matthews_corrcoef(leaveoneoutlabels, predictions)
-         print(mcc)
-         # append mcc for evaluation
-         scores[i] = mcc
-         # store results
-     return scores.mean(), scores.std() **2
-'''
 
 
 def crossValidation(classifier,validationData, validationLabels, folds):
@@ -207,10 +177,11 @@ def run():
     td = data[:dummy_size]
     tl = datalabel[:dummy_size]
 
-    # cf1 = SVC(C=1, kernel='poly', degree=5, gamma=0.05)
-    # cf2 = KNeighborsClassifier(n_neighbors=5)
-    # cf3 = neural_network.MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(128,64), random_state=1)
+    cf1 = SVC(C=1, kernel='poly', degree=5, gamma=0.05)
+    cf2 = KNeighborsClassifier(n_neighbors=5)
+    cf3 = neural_network.MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(128,64), random_state=1)
 
+    kfold(cf2, td, tl, 10, 5)
     # kfold(cf1, td, tl, 10, 5)
     # kfold(cf2, td, tl, 10, 5)
     # kfold(cf3, td, tl, 10, 5)
@@ -233,23 +204,21 @@ def run():
     # start = time.time()
     # cf.fit(data, datalabel)
     # print((time.time()-start))
-    act = np.array([0, 1, 1, 2])
-    preds = np.array([0, 1, 2, 1])
-    act = np.random.randint(0,10,10000)
-    preds = np.random.randint(0,10,10000)
-    C = confusion_mat(act, preds, list(range(10)))
-    # print(C)
-    t = np.sum(C, axis=1)
-    p = np.sum(C, axis = 0)
-    c = np.trace(C)
-    s = act.shape[0]
-
-    numerator = (c*s) - np.dot(t, p)
-    den = np.sqrt((s**2 - np.sum(np.square(p))) * (s**2 - np.sum(np.square(t))))
-    mcc = numerator/den
-    print(mcc - matthews_corrcoef(act, preds))
-    # print(matthews_corrcoef(act, preds))
-    # print(confusion_matrix(act,preds))
+    # act = np.array([0, 1, 1, 2])
+    # preds = np.array([0, 1, 2, 1])
+    # act = np.random.randint(0,10,100)
+    # preds = np.random.randint(0,10,100)
+    # C = confusion_mat(act, preds, list(range(10)))
+    # # print(C)
+    # t = np.sum(C, axis=1)
+    # p = np.sum(C, axis = 0)
+    # c = np.trace(C)
+    # s = act.shape[0]
+    #
+    # numerator = (c*s) - np.dot(t, p)
+    # den = np.sqrt((s**2 - np.sum(np.square(p))) * (s**2 - np.sum(np.square(t))))
+    # mcc = numerator/den
+    # print(mcc - matthews_corrcoef(act, preds))
 
 if __name__ == '__main__':
     run()
