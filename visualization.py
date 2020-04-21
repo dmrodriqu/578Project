@@ -104,7 +104,14 @@ def getconfusionMatrix(labels, predictions):
     return ([[confusionMatrix(labels[i][k], predictions[i][k]) for k in range(len(predictions[i]))] for i in range(predlen)])
 
 
-def main():
+def digitprec(cmat):
+    digits = dict.fromkeys([x for x in range(10)], [])
+    precision, recall = precisionrecall(cmat)
+    for i in range(10):
+        digits[i] = precision[i].mean()
+    return digits
+
+def plotting(digit):
     predictions =structData(outfiles[1], 'pred')
     labels = structData(outfiles[1], 'truth')
     cc = getconfusionMatrix(labels, predictions)
@@ -112,25 +119,39 @@ def main():
     allmcc = []
     prec = []
     rec = []
+    digitdict = dict.fromkeys([x for x in range(10)], [])
     for i in cc:
         # fold
         foldmcc = []
         precisions = []
         recalls = []
         for j in i:
-            foldmcc.append(matthews(j))
             precision, recall = precisionrecall(j)
             # precision across all digits
-            precisions.append(precision[1].mean())
+            precisions.append(precision[digit].mean())
             # recall across all digits
-            recalls.append(recall[1].mean())
+            recalls.append(recall[digit].mean())
         prec.append(precisions)
         rec.append(recalls)
         allmcc.append(foldmcc)
     allmcc = getMCC(labels, predictions)
-    fig, ax = plt.subplots(nrows=3, ncols = 1, figsize =(9,4))
+    return allmcc, prec, rec
+def plotall():
+    mcs=[]
+    precs = []
+    recs = []
+    for i in range(10):
+        allmcc, prec, rec = plotting(i)
+        mcs.append(allmcc)
+        precs.append(prec)
+        recs.append(rec)
+    
+    fig, ax = plt.subplots(nrows=11, ncols = 1, figsize =(10,10))
     bpl = ax[0].boxplot(allmcc, vert = True)
-    bpl2 = ax[1].boxplot(prec, vert = True)
-    bpl2 = ax[2].boxplot(rec, vert = True)
+    for i in range(len(precs)):
+        ax[i+1].boxplot(precs[i], vert = True)
+
+
+        #bpl2 = ax[2].boxplot(rec, vert = True)
     plt.show()
-main()
+plotall()
