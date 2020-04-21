@@ -112,9 +112,9 @@ def digitprec(cmat):
         digits[i] = precision[i].mean()
     return digits
 
-def plotting(digit):
-    predictions =structData(outfiles[1], 'pred')
-    labels = structData(outfiles[1], 'truth')
+def plotting(digit, n):
+    predictions =structData(outfiles[n], 'pred')
+    labels = structData(outfiles[n], 'truth')
     cc = getconfusionMatrix(labels, predictions)
     # param
     allmcc = []
@@ -138,7 +138,7 @@ def plotting(digit):
     allmcc = getMCC(labels, predictions)
     return allmcc, prec, rec
 
-def plotall():
+def plotall(alg , boxplot = 'precision'):
     mcs=[]
     precs = []
     recs = []
@@ -147,14 +147,18 @@ def plotall():
     cs = [1, 2, 3, 4, 5, 6]
     poly  = [1, 2 , 3, 4 , 5]
 
+    if alg == 'svm':
+        n = 1
+    else:
+        n = 0
+
     # create labels
     for i in range(0,36,6):
         tickdic[i] = 'c: {:1.1f}, deg [1,6]'.format(cs[i//6])
     ticks = ['{:}'.format(tickdic[i]) for i in tick ]
-
     # get all digit precision and recall
     for i in range(10):
-        allmcc, prec, rec = plotting(i)
+        allmcc, prec, rec = plotting(i, n)
         mcs.append(allmcc)
         precs.append(prec)
         recs.append(rec)
@@ -164,33 +168,33 @@ def plotall():
     bpl = ax[0].boxplot(allmcc, vert = True)
 
     # create all boxplots
+    if boxplot  == 'precision':
+        precs = precs
+    else:
+        precs = recs
     for i in range(len(precs)//2):
-
         ax[i+1].boxplot(precs[i], vert = True)
-        ax[i+1].set_title('Digit {:} Precision'.format(i))
-
+        ax[i+1].set_title('Digit {:} {:}'.format(i, boxplot))
         #bpl2 = ax[2].boxplot(rec, vert = True)
-    ax[-1].xaxis.set_ticks(tick)
-    ax[-1].xaxis.set_ticklabels(ticks)
-
+    if alg == 'svm':
+        ax[-1].xaxis.set_ticks(tick)
+        ax[-1].xaxis.set_ticklabels(ticks)
     ax[0].set_title("Matthews Correlation Coefficient (All Classes)")
-
-    ax[3].set_ylabel("Precision")
+    ax[3].set_ylabel(boxplot)
     plt.show()
     fig, ax = plt.subplots(nrows=6, ncols = 1, figsize =(10,10), tight_layout = True)
     bpl = ax[0].boxplot(allmcc, vert = True)
-
-
     for i in range(len(precs)//2, len(precs)):
         print(i)
         ax[i-len(precs)//2 + 1].boxplot(precs[i], vert = True)
-        ax[i-len(precs)//2 + 1].set_title('Digit {:}  Precision'.format(i))
-
+        ax[i-len(precs)//2 + 1].set_title('Digit {:} {}'.format(i,boxplot))
         #bpl2 = ax[2].boxplot(rec, vert = True)
-    ax[-1].xaxis.set_ticks(tick)
-    ax[-1].xaxis.set_ticklabels(ticks)
+    if alg == 'svm':
+        ax[-1].xaxis.set_ticks(tick)
+        ax[-1].xaxis.set_ticklabels(ticks)
     ax[0].set_title("Matthews Correlation Coefficient (All Classes)")
-    ax[3].set_ylabel("Precision")
+    ax[3].set_ylabel(boxplot)
     plt.show()
 
-plotall()
+plotall('knn', boxplot = 'recall')
+plotall('svm', boxplot = 'precision')
