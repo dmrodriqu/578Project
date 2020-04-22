@@ -161,6 +161,95 @@ def plotall(alg , boxplot = 'precision'):
     ax[0].set_title("Matthews Correlation Coefficient (All Classes)")
     ax[3].set_ylabel(boxplot)
     plt.show()
+def structData(filename, atr):
+    attrb = {'neighbors': 0, 
+            'fold': 2,
+            'dict': 4,
+            'pred': 7,
+            'truth': 10}
+    f = open(filename, 'r')
+    s = f.read() 
+    f.close()
+    linelist = s.splitlines()
 
+    #print(linelist[55])
+    data  = []
+
+    # parsing out file
+    if filename == outfiles[0]:
+        for k in range(0,15):
+            if (atr == 'pred') or (atr == 'truth'):
+                folds = [list(map(int, linelist[attrb[atr] + (55*k) + (i*10)].split(','))) for i in range(0,5)]
+            else:
+                folds = [linelist[attrb[atr] + (55*k) + (i*10)] for i in range(0,5)]
+            data.append(folds)
+    elif filename == outfiles[1]:
+        # parsing svm differently because of different format than rest
+        for k in range(36):
+            fold = []
+            for i in range(5):
+                ix = attrb[atr] + 55*k + i * 10
+                current  = list(map(int, linelist[ix].split(',')))
+                fold.append(current)
+            data.append(fold)
+    else:
+        # parsing differently because out file is different format
+        for i in range(len(linelist)):
+            if atr in linelist[i]:
+                data.append(list(map(int, linelist[i + 1].split(','))))
+                
+        out = [data[k:k+5] for k in range(0, len(data), 5)]
+        return out
+
+    return data
+
+
+labels = structData(outfiles[2], 'actual')
+predictions = structData(outfiles[2], 'pred')
+cc = getconfusionMatrix(labels, predictions)
+# param
+allmcc = []
+prec = []
+rec = []
+for d in range(10):
+    boxplot = 'precision'
+    digitdict = dict.fromkeys([x for x in range(10)], [])
+    for i in cc:
+        # fold
+        foldmcc = []
+        precisions = []
+        recalls = []
+        
+        for j in i:
+            precision, recall = precisionrecall(j)
+            # precision across all digits
+            precisions.append(precision[d])
+            # recall across all digits
+            recalls.append(recall[d].mean())
+        prec.append(precisions)
+        rec.append(recalls)
+        allmcc.append(foldmcc)
+    allmcc = getMCC(labels, predictions)
+def nnplot(start):
+# create plot
+    fig, ax = plt.subplots(nrows=6, ncols = 1, figsize =(10,10), tight_layout = True)
+    bpl = ax[0].boxplot(allmcc, vert = True)
+    j = 1
+    i = start*10
+    for _ in range(5):
+        # 0 1 2 3 4 5 6 7 8 9
+        # 1 2 3 4 5 6 7 8 9 10
+        print(prec[i: 10])
+        #0 10 10 
+        ax[j].boxplot(prec[i: i+10],vert = True)
+        j+=1
+        i += 10
+    plt.show()
+nnplot(0)
+nnplot(5)
 plotall('knn', boxplot = 'recall')
+plotall('knn', boxplot = 'precision')
+plotall('svm', boxplot = 'recall')
 plotall('svm', boxplot = 'precision')
+
+
