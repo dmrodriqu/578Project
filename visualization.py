@@ -4,50 +4,14 @@ import matplotlib.cbook as cbook
 from joblib import Parallel, delayed
 
 outfiles = ['results-KNN.txt', 'results-SVM.txt', 'results-NN.txt']
-'''
-processes output file for knn.
-input knn.txt
-output {neighbors (int): [[accuracy, multiclass precision]]
-
-def processknn():
-    testfile = outfiles[0]
-    f = open(testfile, 'r')
-    predlab = []
-    a = ''
-    b = ''
-    cluster = 0
-    iters = {}
-    currclust = []
-    for line in f:
-        if 'labels:' in line:
-            a = f.readline()
-            a  = list(map(int,a.split(',')))
-            acc = accuracy(a,b)
-            pr = precisionrecall(confusionMatrix(a,b))[0]
-            currclust.append([acc, pr])
-        elif 'predictions' in line:
-            b = f.readline()
-            b= list(map(int, b.split(',')))
-        elif 'Clusters' in line: 
-            if cluster >  0:
-                iters[cluster] = currclust
-                currclust = []
-            cluster += 1
-    return iters
 
 '''
-'''
-kn = processknn()
-boxplots(kn, precision = True, digit = 1)
-'''
-
-'''
-0 neighbors
+0 description
 2 fold number
 4 dictionary tp/fp
 7 predictions
 10 labels
-difference between  neighbors = 55
+difference between description = 55
 '''
 def structData(filename, atr):
     attrb = {'neighbors': 0, 
@@ -149,6 +113,8 @@ def plotall(alg , boxplot = 'precision'):
 
     if alg == 'svm':
         n = 1
+    elif alg == 'nn':
+        n =2
     else:
         n = 0
 
