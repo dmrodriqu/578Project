@@ -4,6 +4,7 @@ from scipy.stats import f as F
 from scipy.stats import t as T
 from itertools import combinations
 from statsmodels.stats.libqsturng import psturng, qsturng
+import pandas as pd
 
 # population mean
 def mean(population):
@@ -148,11 +149,16 @@ def statistical_analysis(population):
     :return: the index of the best sample. Type: int
     """
     ss, ssresid, sse, msres, msex, fscore, p = anova(population)
-    if p > 0.05:    # all samples had means which were statistically similar
+    # np.savetxt('population.txt', population, delimiter=',')
+    if p >= 0.05:    # all samples had means which were statistically similar
         return 0    # we can select one sample randomly. Here we just say select the 0-th (first) sample
     # if p < 0.05, we reject the null-hypothesis that all means were equal. Now we need to find the best sample,
     # i.e the one with the highest mean
     different_pairs = tukeyhsd(population, msres)
+    # print(different_pairs)
+    # post-hoc analysis did not find any statistically significantly different groups #
+    if not different_pairs:
+        return 0
     # determine the best sample #
     sample_means = {}
     for i in range(population.shape[0]):
@@ -167,7 +173,6 @@ def statistical_analysis(population):
         elif best_mean < sample_means[pair[1]]:
             best_mean = sample_means[pair[1]]
             best_sample_num = pair[1]
-
     return best_sample_num
 
 
@@ -185,3 +190,27 @@ def statistical_analysis(population):
 #
 # print(statistical_analysis(results))
 # print(statistical_analysis(res2))
+
+# res = np.loadtxt('population.txt', delimiter=',')
+# ss, ssresid, sse, msres, msex, fscore, p = anova(res)
+# print(statistical_analysis(res))
+# df = pd.DataFrame()
+# for i in range(res.shape[0]):
+#     df['treatment' + str(i)] = res[i,:]
+#
+# stacked_data = df.stack().reset_index()
+# stacked_data = stacked_data.rename(columns={'level_0': 'id',
+#                                             'level_1': 'treatment',
+#                                             0:'result'})
+#
+# from statsmodels.stats.multicomp import (pairwise_tukeyhsd,
+#                                          MultiComparison)
+# MultiComp = MultiComparison(stacked_data['result'],
+#                             stacked_data['treatment'])
+#
+# print(MultiComp.tukeyhsd().summary())
+#
+# import scipy.stats as stats
+# groups = [list(res[i,:]) for i in range(res.shape[0])]
+# F_statistic, pVal = stats.f_oneway(*groups)
+# print(pVal, F_statistic)

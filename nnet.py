@@ -8,14 +8,6 @@ import numpy as np
 use_cuda = False    # set to True if GPU available
 
 
-#####################################################################################################################
-"""
-class Net: inherited from nn.Module
-Defines a feed forward neural network
-"""
-#####################################################################################################################
-
-
 class Net(nn.Module):
     """
     class Net

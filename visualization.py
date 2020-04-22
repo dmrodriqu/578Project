@@ -133,4 +133,4 @@ def main():
     bpl2 = ax[1].boxplot(prec, vert = True)
     bpl2 = ax[2].boxplot(rec, vert = True)
     plt.show()
-main()
+# main()
