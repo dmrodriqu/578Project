@@ -51,14 +51,11 @@ def run():
                         help='Option to run (1 = SVM, 2 = Neural Network, 3 = K-Nearest Neighbors')
     parser.add_argument('--output_file', type=str, default='results.txt', help='Output file')
     parser.add_argument('--njobs', type=str, default='1', help='number of jobs (if available)')
-    parser.add_argument('--percent_samples', type=str, default='1', help='percentage of samples to use')
     args = parser.parse_args()
 
     data, val_data, data_labels, val_labels = ld.trainvalsplit('train')  # train and validation datasets
     train_data = np.concatenate((data, val_data), axis=0)
     train_labels = np.concatenate((data_labels, val_labels), axis=0)
-    train_data= train_data[:int((len(train_data)-1)*float(args.percent_samples))]
-    train_labels = train_labels[:int((len(train_labels)-1)*float(args.percent_samples))]
 
 
 
