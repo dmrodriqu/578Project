@@ -1,45 +1,50 @@
+'''
+Visualization functions for output files.
+Plots boxplots for all hyperparameters. 
+
+format of output:
+
+    matthews correlation coefficient (all digits)
+    
+    (either precision or recall)
+    digit 1
+    digit 2
+    ...
+    digit 9
+    
+    hyper parameters in x axis, y axis is precision/recall or mcc
+
+'''
+
 from metric import *
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cbook
 from joblib import Parallel, delayed
 
+# output file names hardcoded from other algorithms write function
+
 outfiles = ['results-KNN.txt', 'results-SVM.txt', 'results-NN.txt']
 
+
 '''
+output files must be parsed. Simple text parsing
+results-knn and results-svm are similar
+
+results-nn is in different output format
+
+
+from the beginning of the file, line numbers are:
 0 description
 2 fold number
 4 dictionary tp/fp
 7 predictions
 10 labels
 difference between description = 55
+
+for next algorithm hyperparameters + 55
+
+
 '''
-def structData(filename, atr):
-    attrb = {'neighbors': 0, 
-            'fold': 2,
-            'dict': 4,
-            'pred': 7,
-            'truth': 10}
-    f = open(filename, 'r')
-    s = f.read() 
-    f.close()
-    linelist = s.splitlines()
-    data  = []
-    if filename == outfiles[0]:
-        for k in range(0,15):
-            if (atr == 'pred') or (atr == 'truth'):
-                folds = [list(map(int, linelist[attrb[atr] + (55*k) + (i*10)].split(','))) for i in range(0,5)]
-            else:
-                folds = [linelist[attrb[atr] + (55*k) + (i*10)] for i in range(0,5)]
-            data.append(folds)
-    elif filename == outfiles[1]:
-        for k in range(36):
-            fold = []
-            for i in range(5):
-                ix = attrb[atr] + 55*k + i * 10
-                current  = list(map(int, linelist[ix].split(',')))
-                fold.append(current)
-            data.append(fold)
-    return data
 
 '''
 getMCC gets mcc of all data
@@ -68,6 +73,13 @@ def getconfusionMatrix(labels, predictions):
     return ([[confusionMatrix(labels[i][k], predictions[i][k]) for k in range(len(predictions[i]))] for i in range(predlen)])
 
 
+'''
+get per digit precision and recall from confusion matrix
+
+confusion matrix (np.matrix) -> dictionary {digit (int) : [crossval 1, crossval 2...] (list)
+
+
+'''
 def digitprec(cmat):
     digits = dict.fromkeys([x for x in range(10)], [])
     precision, recall = precisionrecall(cmat)
@@ -101,6 +113,13 @@ def plotting(digit, n):
     allmcc = getMCC(labels, predictions)
     return allmcc, prec, rec
 
+
+'''
+plots svm and knn
+
+str, str -> matplotlib.pyplot
+
+'''
 def plotall(alg , boxplot = 'precision'):
     mcs=[]
     precs = []
@@ -159,6 +178,13 @@ def plotall(alg , boxplot = 'precision'):
     ax[0].set_title("Matthews Correlation Coefficient (All Classes)")
     ax[3].set_ylabel(boxplot)
     plt.show()
+
+
+
+'''
+structures free text into lists
+
+'''
 def structData(filename, atr):
     attrb = {'neighbors': 0, 
             'fold': 2,
@@ -200,6 +226,12 @@ def structData(filename, atr):
 
     return data
 
+
+
+
+'''
+number to start from (gets 5 numbers), 'precision'/'recall' (str)
+'''
 # plots neural network data
 def nnplot(start, precisionorrecall):
     settings = ['784,100,10', '784,200,10',
@@ -256,11 +288,20 @@ def nnplot(start, precisionorrecall):
         i += 10
     plt.show()
 
-nnplot(0, 'precision')
-nnplot(5, 'precision')
-plotall('knn', boxplot = 'recall')
-plotall('knn', boxplot = 'precision')
-plotall('svm', boxplot = 'recall')
-plotall('svm', boxplot = 'precision')
 
 
+'''
+plots results
+'''
+
+def plotAllResults():
+    nnplot(0, 'precision')
+    nnplot(5, 'precision')
+    plotall('knn', boxplot = 'recall')
+    plotall('knn', boxplot = 'precision')
+    plotall('svm', boxplot = 'recall')
+    plotall('svm', boxplot = 'precision')
+
+
+if __name__ == '__main__':
+    plotAllResults()
