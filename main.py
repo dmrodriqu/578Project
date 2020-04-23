@@ -53,8 +53,8 @@ def run():
     args = parser.parse_args()
 
     data, val_data, data_labels, val_labels = ld.trainvalsplit('train')  # train and validation datasets
-    train_data = np.concatenate((data, val_data), axis=0)[:100]
-    train_labels = np.concatenate((data_labels, val_labels), axis=0)[:100]
+    train_data = np.concatenate((data, val_data), axis=0)# testing[:1000]
+    train_labels = np.concatenate((data_labels, val_labels), axis=0)# testing [:1000]
     test_data = ld.trainvalsplit('test')   # test set
     num_classes = 10
     k = 5   # number of folds
@@ -69,9 +69,26 @@ def run():
             for deg in range(1,7):
                 cf = SVC(C=c/10, kernel='poly', degree=deg, gamma=0.05)
                 classifiers.append(cf)
-        mcc_measures = np.zeros((len(classifiers), k))
+
+            '''
+            # emb par loop
+            results = Parallel(n_jobs=4)(delayed(SVC)(C=c/10, kernel='poly', degree=deg, gamma=0.05) for deg in range(1,7))
+            for i in results:
+                classifiers.append(i)
+            '''
+        '''
         for i in range(len(classifiers)):
             mcc_measures[i, :] = kfold(classifiers[i], train_data, train_labels, num_classes, k, args.output_file)
+        '''  
+
+        #run in parallel
+        mcc_measures = np.zeros((len(classifiers), k))
+
+        print('running in parallel, order of folds may not display correctly')
+        measures = Parallel(n_jobs = -1, verbose = 100)(delayed(kfold)(classifiers[i], train_data, train_labels, num_classes, k, args.output_file) for i in range(len(classifiers)))
+        for i in range(len(measures)):
+            mcc_measures[i,:] = measures[i]
+
         post_tuning(train_data, train_labels, test_data, num_classes, classifiers, mcc_measures)
 
     elif args.option == 2:  # run Neural Network classifiers
