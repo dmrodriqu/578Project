@@ -50,11 +50,19 @@ def run():
     parser.add_argument('--option', type=int, default=1,
                         help='Option to run (1 = SVM, 2 = Neural Network, 3 = K-Nearest Neighbors')
     parser.add_argument('--output_file', type=str, default='results.txt', help='Output file')
+    parser.add_argument('--njobs', type=str, default='1', help='number of jobs (if available)')
+    parser.add_argument('--percent_samples', type=str, default='1', help='percentage of samples to use')
     args = parser.parse_args()
 
     data, val_data, data_labels, val_labels = ld.trainvalsplit('train')  # train and validation datasets
-    train_data = np.concatenate((data, val_data), axis=0)# testing[:1000]
-    train_labels = np.concatenate((data_labels, val_labels), axis=0)# testing [:1000]
+    train_data = np.concatenate((data, val_data), axis=0)
+    train_labels = np.concatenate((data_labels, val_labels), axis=0)
+    train_data= train_data[:int((len(train_data)-1)*float(args.percent_samples))]
+    train_labels = train_labels[:int((len(train_labels)-1)*float(args.percent_samples))]
+
+
+
+
     test_data = ld.trainvalsplit('test')   # test set
     num_classes = 10
     k = 5   # number of folds
@@ -75,8 +83,6 @@ def run():
             results = Parallel(n_jobs=4)(delayed(SVC)(C=c/10, kernel='poly', degree=deg, gamma=0.05) for deg in range(1,7))
             for i in results:
                 classifiers.append(i)
-            '''
-        '''
         for i in range(len(classifiers)):
             mcc_measures[i, :] = kfold(classifiers[i], train_data, train_labels, num_classes, k, args.output_file)
         '''  
@@ -85,7 +91,7 @@ def run():
         mcc_measures = np.zeros((len(classifiers), k))
 
         print('running in parallel, order of folds may not display correctly')
-        measures = Parallel(n_jobs = -1, verbose = 100)(delayed(kfold)(classifiers[i], train_data, train_labels, num_classes, k, args.output_file) for i in range(len(classifiers)))
+        measures = Parallel(n_jobs = int(args.njobs), verbose = 100)(delayed(kfold)(classifiers[i], train_data, train_labels, num_classes, k, args.output_file) for i in range(len(classifiers)))
         for i in range(len(measures)):
             mcc_measures[i,:] = measures[i]
 
