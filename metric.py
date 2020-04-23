@@ -14,7 +14,7 @@ List: labels, List: predictions, optional (bool) ->
         predicted
 '''
 def confusionMatrix(labels, predictions, normalized = False):
-    uniquelab = set(labels)
+    uniquelab = set(list(range(10)))
     llab = len(uniquelab)
     cmat = np.zeros((llab,llab))
     counts = Counter(labels)
@@ -56,8 +56,9 @@ output = float : accuracy
 def accuracy(labels, predictions):
     n = len(labels)
     tot = 0
+    tolerance = 1e-6
     for i in range(n):
-        if labels[i] - predictions[i] == 0:
+        if int(labels[i]) - int(predictions[i]) < tolerance:
             tot += 1
     return tot/n
 
