@@ -23,7 +23,6 @@ def structData(filename, atr):
     s = f.read() 
     f.close()
     linelist = s.splitlines()
-    #print(linelist[55])
     data  = []
     if filename == outfiles[0]:
         for k in range(0,15):
@@ -151,7 +150,6 @@ def plotall(alg , boxplot = 'precision'):
     fig, ax = plt.subplots(nrows=6, ncols = 1, figsize =(10,10), tight_layout = True)
     bpl = ax[0].boxplot(allmcc, vert = True)
     for i in range(len(precs)//2, len(precs)):
-        print(i)
         ax[i-len(precs)//2 + 1].boxplot(precs[i], vert = True)
         ax[i-len(precs)//2 + 1].set_title('Digit {:} {}'.format(i,boxplot))
         #bpl2 = ax[2].boxplot(rec, vert = True)
@@ -172,7 +170,6 @@ def structData(filename, atr):
     f.close()
     linelist = s.splitlines()
 
-    #print(linelist[55])
     data  = []
 
     # parsing out file
@@ -203,50 +200,64 @@ def structData(filename, atr):
 
     return data
 
+# plots neural network data
+def nnplot(start, precisionorrecall):
+    settings = ['784,100,10', '784,200,10',
+                '784,300,10', '784,400,10',
+                '784,500,10', '784,300,200,10',
+                '784,300,200,10', '784,300,100,10',
+                '784,500,200,10', '784,500,100,10']
+    labels = structData(outfiles[2], 'actual')
+    predictions = structData(outfiles[2], 'pred')
+    cc = getconfusionMatrix(labels, predictions)
+    # param
+    allmcc = []
+    prec = []
+    rec = []
+    for d in range(10):
+        boxplot = 'precision'
+        digitdict = dict.fromkeys([x for x in range(10)], [])
+        for i in cc:
+            # fold
+            foldmcc = []
+            precisions = []
+            recalls = []
+            for j in i:
+                precision, recall = precisionrecall(j)
+                # precision across all digits
+                precisions.append(precision[d])
+                # recall across all digits
+                recalls.append(recall[d].mean())
+            prec.append(precisions)
+            rec.append(recalls)
+            allmcc.append(foldmcc)
+        allmcc = getMCC(labels, predictions)
 
-labels = structData(outfiles[2], 'actual')
-predictions = structData(outfiles[2], 'pred')
-cc = getconfusionMatrix(labels, predictions)
-# param
-allmcc = []
-prec = []
-rec = []
-for d in range(10):
-    boxplot = 'precision'
-    digitdict = dict.fromkeys([x for x in range(10)], [])
-    for i in cc:
-        # fold
-        foldmcc = []
-        precisions = []
-        recalls = []
-        
-        for j in i:
-            precision, recall = precisionrecall(j)
-            # precision across all digits
-            precisions.append(precision[d])
-            # recall across all digits
-            recalls.append(recall[d].mean())
-        prec.append(precisions)
-        rec.append(recalls)
-        allmcc.append(foldmcc)
-    allmcc = getMCC(labels, predictions)
-def nnplot(start):
-# create plot
+    # create plot
     fig, ax = plt.subplots(nrows=6, ncols = 1, figsize =(10,10), tight_layout = True)
     bpl = ax[0].boxplot(allmcc, vert = True)
+    ax[0].set_title("Matthews Correlation Coefficient (All Classes)")
     j = 1
     i = start*10
     for _ in range(5):
         # 0 1 2 3 4 5 6 7 8 9
         # 1 2 3 4 5 6 7 8 9 10
-        print(prec[i: 10])
         #0 10 10 
-        ax[j].boxplot(prec[i: i+10],vert = True)
+        if precisionorrecall == 'precision':
+            ax[j].boxplot(prec[i: i+10],vert = True)
+            ax[j].set_title('Precision for digit {:}'.format(j))
+
+            plt.setp(ax, xticks=[x for x in range(10)], xticklabels= ['' for x in range(10)])
+            plt.xticks(np.arange(10), settings, rotation  = 45)
+        else:
+            ax[j].boxplot(rec[i: i+10],vert = True)
+            ax[j].set_title('Precision for digit {:}'.format(j))
         j+=1
         i += 10
     plt.show()
-nnplot(0)
-nnplot(5)
+
+nnplot(0, 'precision')
+nnplot(5, 'precision')
 plotall('knn', boxplot = 'recall')
 plotall('knn', boxplot = 'precision')
 plotall('svm', boxplot = 'recall')
