@@ -47,9 +47,17 @@ def post_tuning(train_data, train_labels, test_data, num_classes, classifier):
     print("-"*33)
     for i in range(num_classes):
         print("{:^2}{:^22,.2f}{:>9,.2f}".format(i, precision[i], recall[i]))
+    matrixOfConfusion = confusionMatrix(test_data['label'], predictions, normalized = True)
+    fig, ax = plt.subplots()
+    pos = ax.imshow(matrixOfConfusion, cmap = 'Blues', interpolation = None)
+    ax.set_title("Confusion Matrix of Current Algorithm")
+    ax.set_ylabel("Ground Truth")
+    ax.set_xlabel("Predictions")
+    fig.colorbar(pos, ax=ax)
+    plt.show()
 
 
-def tune_hyperparams(classifiers, train_set, train_labels, num_classes, k, output_file):
+def tune_hyperparams(classifiers, train_set, train_labels, num_classes, k, output_file, njobs = 1):
     """
     calls the kfold() function on all the classifiers, followed by ANOVA and post-hoc Tukey's HSD tests to
     determine the hyperparameters values for which we get the best performance on validation dataset
@@ -61,12 +69,24 @@ def tune_hyperparams(classifiers, train_set, train_labels, num_classes, k, outpu
     :param output_file: path to file to write the cross validation data to
     :return: the index of the classifier in the list classifiers with the best performance
     """
+     
+    '''
     mcc_measures = np.zeros((len(classifiers), k))
     for i in range(len(classifiers)):
         mcc_measures[i, :] = kfold(classifiers[i], train_set, train_labels,
                                    num_classes, k, output_file)
     best_ind = statistical_analysis(mcc_measures)  # index of the best classifier
-    return best_ind
+
+    '''
+
+    #run in parallel
+    mcc_measures = np.zeros((len(classifiers), k))
+    print('running in parallel, order of folds may not display correctly')
+    measures = Parallel(n_jobs = njobs, verbose = 1)(delayed(kfold)(classifiers[i], train_set, train_labels, num_classes, k, output_file) for i in range(len(classifiers)))
+    for i in range(len(measures)):
+        mcc_measures[i,:] = measures[i]
+
+    return statistical_analysis(mcc_measures)
 
 
 def run():
@@ -80,6 +100,8 @@ def run():
     parser.add_argument('--data_percentage', type=float, default=100,
                         help='percentage of training data to be used (a number in the interval (0-100]')
     parser.add_argument('--output_file', type=str, default='results.txt', help='Output file')
+    parser.add_argument('--n_jobs', type=str, default=1, help='number of jobs')
+
     args = parser.parse_args()
 
     data, val_data, data_labels, val_labels = ld.trainvalsplit('train')  # train and validation datasets
@@ -114,7 +136,7 @@ def run():
                 classifiers.append(cf)
 
         best_ind = tune_hyperparams(classifiers, selected_trainset, selected_trainlabels,
-                                    num_classes, k, args.output_file)
+                                    num_classes, k, args.output_file, int(args.n_jobs))
         print('based on statistical analysis of the 5-fold cross validation, the best SVM has C =',
               classifiers[best_ind].C, "and the degree of its kernel polynomial =", classifiers[best_ind].degree)
         post_tuning(selected_trainset, selected_trainlabels, test_data, num_classes, classifiers[best_ind])
