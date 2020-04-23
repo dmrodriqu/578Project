@@ -3,6 +3,14 @@ Simply download all the code files provided into a folder, let us call it projec
 --------------------------------------------------
 Running the program
 --------------------------------------------------
+
+Create the environment:
+
+```
+conda env create -f environment.yml
+```
+This will create an environment in your default conda path.
+
 Then code is run by the entering a command in the following format in command prompt (e.g. terminal): 
 python main.py --option=t --data_percentage=p --output_file=<filepath>
 
