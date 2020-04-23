@@ -1,7 +1,7 @@
 import LoadData as ld
 import numpy as np
 import crossval
-from cuml.svm import SVC as cuSVC
+# from cuml.svm import SVC as cuSVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
 
@@ -23,11 +23,11 @@ def tuning(data, val, datalabel, vallabel):
     return
 
 
-
-data, validation, datalabel, validationlabel = ld.trainvalsplit('train')
-from sklearn import preprocessing
-lb = preprocessing.LabelBinarizer()
-dbin = lb.fit_transform(datalabel)
-vbin = lb.fit_transform(validationlabel)
-tuning(data[:1000], validation[:1000], datalabel[:1000], validationlabel[:1000])
+#
+# data, validation, datalabel, validationlabel = ld.trainvalsplit('train')
+# from sklearn import preprocessing
+# lb = preprocessing.LabelBinarizer()
+# dbin = lb.fit_transform(datalabel)
+# vbin = lb.fit_transform(validationlabel)
+# tuning(data[:1000], validation[:1000], datalabel[:1000], validationlabel[:1000])
 

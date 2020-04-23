@@ -11,7 +11,7 @@ import nnet
 import time
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import neural_network
-
+import metric
 
 def createix(folds):
     foldarr = []
@@ -24,7 +24,9 @@ def createix(folds):
     return np.array(foldarr)
 
 
-def write_to_file(classifier, perf_measure, fold_num, actual_labels, predictions, ofilename):
+def write_to_file(classifier, perf_measure, fold_num,
+                  actual_labels, predictions, ofilename,
+                  write_classifier=False):
     """
     writes the performance of the classifier to a text file
     :param classifier: the sklearn classifier. Type: one of skleran SVC, Multilayer Perceptron, or K-Nearest Neighbors
@@ -35,8 +37,23 @@ def write_to_file(classifier, perf_measure, fold_num, actual_labels, predictions
     :param ofilename: output file name. Type: String
     :return: None
     """
+    cf_svm = SVC(C=1, kernel='poly', degree=5, gamma=0.05)
+    cf_knn = KNeighborsClassifier(n_neighbors=5)
+    cf_nn = neural_network.MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(128,64), random_state=1)
     ofile = open(ofilename, 'a+')
-    ofile.write(str(classifier) + "\n\n")
+    if write_classifier:
+        if type(classifier) == type(cf_svm):    # the classifier is an SVM
+            ofile.write("C: " + str(classifier.C) +
+                        ", kernel: " + classifier.kernel + ", degree: " + str(classifier.degree)
+                        + ", gamma: " + str(classifier.gamma) +"\n\n")
+
+        elif type(classifier) == type(cf_nn):   # the classifier is a neural network
+            ofile.write("NNET Size: " + '784,' +
+                        ','.join([str(i) for i in tuple(classifier.hidden_layer_sizes)]) + ',10' +'\n\n')
+
+        elif type(classifier) == type(cf_knn):  # the classifier is a KNN
+            ofile.write('K-Nearest Neighbors. # of Clusters: ' + str(classifier.n_neighbors) + '\n\n')
+
     ofile.write("fold #: " + str(fold_num) + '\n\n')
     ofile.write(str(perf_measure) + '\n\n')
     ofile.write('predictions:\n' + ','.join([str(i) for i in predictions]) + '\n\n')
@@ -111,7 +128,24 @@ def confusion_mat(actual_labels, predicted_labels, classes):
     return mat
 
 
-def kfold(classifier, data, labels, num_classes, k):
+def compute_MCC(actual_labels, predictions, classes):
+    """
+    function compute_MCC(actual_labels, predictions, classes)
+    computes the Mathew's Correlation coefficient for a classifier's performance
+    :param actual_labels: actual labels for each data instance. Type: numpy array
+    :param predictions: predicted labels for each data instance. Type: numpy array
+    :param classes: a list of all classes. Type: list
+    :return: the computed Mathew's correlation coefficient. Type: float
+    """
+    C = confusion_mat(actual_labels, predictions, classes)
+    # use the confusion matrix to compute the multiclass Mathew's correlation coefficient #
+    t = np.sum(C, axis=1)  # t[j] := number of times class j truly occurred
+    p = np.sum(C, axis=0)  # p[j] := number of times class j was predicted
+    c = np.trace(C)  # c := total number of correct predictions
+    s = actual_labels.shape[0]  # s:= total number of data points
+    return ((c * s) - np.dot(t, p)) / np.sqrt((s ** 2 - np.sum(np.square(p))) * (s ** 2 - np.sum(np.square(t))))
+
+def kfold(classifier, data, labels, num_classes, k, ofile):
     """
     function kfold(classifier, val, vallabel, folds)
     description: runs kfold cross validation for a classifier. It splits the data into specified number
@@ -122,6 +156,7 @@ def kfold(classifier, data, labels, num_classes, k):
     :param labels: an array containing the true labels for the validation data (val). Type: numpy array
     :param num_classes: number of classes. Type: int
     :param k: number of folds for k-fold cross validation. Type: integer
+    :param ofile: the output file results need to be written to
     :return: Mathew's correlation coefficient computed for each fold. Type: numpy array
     """
     # split the data into folds many disjoint sets #
@@ -132,25 +167,24 @@ def kfold(classifier, data, labels, num_classes, k):
     classes = list(range(num_classes))
     for i in range(k):
         print("fold #: ", i)
-        # ofile.write('fold #: ' + str(i) + '\n\n')
         validation_indices = set(range(subset_size*i,min(subset_size*(i+1), n)))  # the indices of the validation set
         train_indices = list(all_indices - validation_indices)              # train set is all data but the validation
         validation_indices = list(validation_indices)
+        actual = labels[validation_indices]
         # train the classifier on the training set #
         classifier.fit(data[train_indices], labels[train_indices])
         # use the trained classifier to make predictions #
         predictions = classifier.predict(data[validation_indices])
         # get the measure of the performance of the classifier #
-        perf_measure = performance(labels[validation_indices], predictions, classes)
-        C = confusion_mat(labels[validation_indices], predictions, classes)
-        # use the confusion matrix to compute the multiclass Mathew's correlation coefficient #
-        t = np.sum(C, axis=1)   # t[j] := number of times class j truly occurred
-        p = np.sum(C, axis=0)   # p[j] := number of times class j was predicted
-        c = np.trace(C)         # c := total number of correct predictions
-        s = labels[validation_indices].shape[0]     # s:= total number of data points
-        mcc = (c * s) - np.dot(t, p) / np.sqrt((s ** 2 - np.sum(np.square(p))) * (s ** 2 - np.sum(np.square(t))))
+        perf_measure = performance(actual, predictions, classes)
+        mcc = compute_MCC(labels[validation_indices], predictions, classes)
         scores[i] = mcc
-        write_to_file(classifier, perf_measure, i, labels[validation_indices], predictions, 'results.txt')
+        write_to_file(classifier, perf_measure, i, labels[validation_indices], predictions, ofile,
+                      bool(i == 0))
+        if (i == 4):
+            output_file_handler = open(ofile, "a+")
+            output_file_handler.write("\n" + '#'*100 + "\n\n")
+            output_file_handler.close()
     return scores
 
 
@@ -181,7 +215,7 @@ def run():
     cf2 = KNeighborsClassifier(n_neighbors=5)
     cf3 = neural_network.MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(128,64), random_state=1)
 
-    kfold(cf2, td, tl, 10, 5)
+    # kfold(cf2, td, tl, 10, 5)
     # kfold(cf1, td, tl, 10, 5)
     # kfold(cf2, td, tl, 10, 5)
     # kfold(cf3, td, tl, 10, 5)
@@ -206,19 +240,33 @@ def run():
     # print((time.time()-start))
     # act = np.array([0, 1, 1, 2])
     # preds = np.array([0, 1, 2, 1])
-    # act = np.random.randint(0,10,100)
-    # preds = np.random.randint(0,10,100)
-    # C = confusion_mat(act, preds, list(range(10)))
-    # # print(C)
+    # actual = np.random.randint(0,10,10000)
+    # predictions = np.random.randint(0,10,10000)
+#     C = confusion_mat(act, preds, list(range(10)))
+#     # print(C)
+#     t = np.sum(C, axis=1)
+#     p = np.sum(C, axis = 0)
+#     c = np.trace(C)
+#     s = act.shape[0]
+#
+#     numerator = (c*s) - np.dot(t, p)
+#     den = np.sqrt((s**2 - np.sum(np.square(p))) * (s**2 - np.sum(np.square(t))))
+#     mcc = numerator/den
+#     print(mcc, matthews_corrcoef(act, preds))
+#
+    # scores, predictions, actual = kfold(cf2, td, tl, 10, 5, '')
+    # predictions = np.array([7, 0, 7, 0, 7, 7, 1, 1, 1, 1, 9, 0, 8, 7, 0, 1, 3, 3, 9, 3])
+    # actual = np.array([7, 5, 5, 0, 7, 7, 8, 1, 1, 1, 9, 0, 8, 7, 0, 1, 5, 5, 9, 3])
+    # C = confusion_mat(actual, predictions, list(range(10)))
     # t = np.sum(C, axis=1)
     # p = np.sum(C, axis = 0)
     # c = np.trace(C)
-    # s = act.shape[0]
+    # s = actual.shape[0]
     #
     # numerator = (c*s) - np.dot(t, p)
     # den = np.sqrt((s**2 - np.sum(np.square(p))) * (s**2 - np.sum(np.square(t))))
     # mcc = numerator/den
-    # print(mcc - matthews_corrcoef(act, preds))
-
-if __name__ == '__main__':
-    run()
+#     print(matthews_corrcoef(actual, predictions))
+#     print(compute_MCC(actual, predictions, list(range(10))))
+# if __name__ == '__main__':
+#     run()
