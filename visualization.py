@@ -277,13 +277,13 @@ def nnplot(start, precisionorrecall):
         #0 10 10 
         if precisionorrecall == 'precision':
             ax[j].boxplot(prec[i: i+10],vert = True)
-            ax[j].set_title('Precision for digit {:}'.format(j))
+            ax[j].set_title('Precision for digit {:}'.format(j+start -1))
 
             plt.setp(ax, xticks=[x for x in range(10)], xticklabels= ['' for x in range(10)])
             plt.xticks(np.arange(10), settings, rotation  = 45)
         else:
             ax[j].boxplot(rec[i: i+10],vert = True)
-            ax[j].set_title('Precision for digit {:}'.format(j))
+            ax[j].set_title('Recall for digit {:}'.format(j+start - 1))
         j+=1
         i += 10
     plt.show()
@@ -297,6 +297,9 @@ plots results
 def plotAllResults():
     nnplot(0, 'precision')
     nnplot(5, 'precision')
+    nnplot(0, 'recall')
+    nnplot(5, 'recall')
+
     plotall('knn', boxplot = 'recall')
     plotall('knn', boxplot = 'precision')
     plotall('svm', boxplot = 'recall')
