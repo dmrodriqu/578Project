@@ -24,6 +24,7 @@ from joblib import Parallel, delayed
 # output file names hardcoded from other algorithms write function
 
 outfiles = ['results-KNN.txt', 'results-SVM.txt', 'results-NN.txt']
+final = ['final_output-KNN.txt','final_output-NN.txt','final_output-SVN.txt']
 
 
 '''
@@ -306,5 +307,21 @@ def plotAllResults():
     plotall('svm', boxplot = 'precision')
 
 
+
 if __name__ == '__main__':
     plotAllResults()
+    names = ['KNN', 'NN', 'SVM']
+    for i in range(3):
+        finalResult = open(final[i], 'r')
+        readResult = finalResult.readlines()
+        finalpre  = list(map(int, readResult[3].split(',')))
+        finallab  = list(map(int,readResult[6].split(',')))
+        finalcmat = confusionMatrix(finallab, finalpre, normalized = True)
+        pl, ax = plt.subplots()
+        pos = ax.imshow(finalcmat, cmap = 'Blues_r', interpolation = None)
+        ax.set_title("Confusion Matrix for {}".format(names[i])) 
+        ax.set_ylabel("Ground Truth")
+        ax.set_xlabel("Predictions")
+        pl.colorbar(pos, ax=ax)
+        plt.show()
+
