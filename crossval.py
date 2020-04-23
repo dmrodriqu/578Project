@@ -13,6 +13,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn import neural_network
 import metric
 
+
 def createix(folds):
     foldarr = []
     for i in range(folds):
@@ -59,6 +60,7 @@ def write_to_file(classifier, perf_measure, fold_num,
     ofile.write('predictions:\n' + ','.join([str(i) for i in predictions]) + '\n\n')
     ofile.write('actual labels:\n' + ','.join([str(i) for i in actual_labels]) + '\n\n')
     ofile.close()
+
 
 def performance(actual_labels, predicted_labels, classes):
     """
@@ -137,13 +139,15 @@ def compute_MCC(actual_labels, predictions, classes):
     :param classes: a list of all classes. Type: list
     :return: the computed Mathew's correlation coefficient. Type: float
     """
-    C = confusion_mat(actual_labels, predictions, classes)
+    C = metric.confusionMatrix(actual_labels, predictions)
+    # C = confusion_mat(actual_labels, predictions, classes)
     # use the confusion matrix to compute the multiclass Mathew's correlation coefficient #
     t = np.sum(C, axis=1)  # t[j] := number of times class j truly occurred
     p = np.sum(C, axis=0)  # p[j] := number of times class j was predicted
     c = np.trace(C)  # c := total number of correct predictions
     s = actual_labels.shape[0]  # s:= total number of data points
     return ((c * s) - np.dot(t, p)) / np.sqrt((s ** 2 - np.sum(np.square(p))) * (s ** 2 - np.sum(np.square(t))))
+
 
 def kfold(classifier, data, labels, num_classes, k, ofile):
     """
@@ -165,6 +169,15 @@ def kfold(classifier, data, labels, num_classes, k, ofile):
     all_indices = set(range(n))
     scores = np.array(np.zeros(k))
     classes = list(range(num_classes))
+    cf_svm = SVC()
+    cf_knn = KNeighborsClassifier()
+    cf_nn = neural_network.MLPClassifier()
+    if type(classifier) == type(cf_svm):
+        print("SVM. C =", classifier.C, "kernel using polynomial of degree", classifier.degree)
+    elif type(classifier) == type(cf_knn):
+        print("KNN classifier with neighbors =", classifier.n_neighbors)
+    elif type(classifier) == type(cf_nn):
+        print("NNET Size: " + '784,' + ','.join([str(i) for i in tuple(classifier.hidden_layer_sizes)]) + ',10')
     for i in range(k):
         print("fold #: ", i)
         validation_indices = set(range(subset_size*i,min(subset_size*(i+1), n)))  # the indices of the validation set
@@ -181,16 +194,11 @@ def kfold(classifier, data, labels, num_classes, k, ofile):
         scores[i] = mcc
         write_to_file(classifier, perf_measure, i, labels[validation_indices], predictions, ofile,
                       bool(i == 0))
-        if (i == 4):
+        if i == 4:
             output_file_handler = open(ofile, "a+")
             output_file_handler.write("\n" + '#'*100 + "\n\n")
             output_file_handler.close()
     return scores
-
-
-
-def crossValidation(classifier,validationData, validationLabels, folds):
-    return kfold(classifier, validationData, validationLabels, folds)
 
 
 ###################################################################################################################
@@ -240,8 +248,8 @@ def run():
     # print((time.time()-start))
     # act = np.array([0, 1, 1, 2])
     # preds = np.array([0, 1, 2, 1])
-    # actual = np.random.randint(0,10,10000)
-    # predictions = np.random.randint(0,10,10000)
+    actual = np.random.randint(0,10,10000)
+    predictions = np.random.randint(0,10,10000)
 #     C = confusion_mat(act, preds, list(range(10)))
 #     # print(C)
 #     t = np.sum(C, axis=1)
@@ -257,15 +265,20 @@ def run():
     # scores, predictions, actual = kfold(cf2, td, tl, 10, 5, '')
     # predictions = np.array([7, 0, 7, 0, 7, 7, 1, 1, 1, 1, 9, 0, 8, 7, 0, 1, 3, 3, 9, 3])
     # actual = np.array([7, 5, 5, 0, 7, 7, 8, 1, 1, 1, 9, 0, 8, 7, 0, 1, 5, 5, 9, 3])
-    # C = confusion_mat(actual, predictions, list(range(10)))
-    # t = np.sum(C, axis=1)
-    # p = np.sum(C, axis = 0)
-    # c = np.trace(C)
-    # s = actual.shape[0]
-    #
-    # numerator = (c*s) - np.dot(t, p)
-    # den = np.sqrt((s**2 - np.sum(np.square(p))) * (s**2 - np.sum(np.square(t))))
-    # mcc = numerator/den
+    C = confusion_mat(actual, predictions, list(range(10)))
+    C1 = metric.confusionMatrix(actual, predictions)
+    print(metric.matthews(C1))
+    print(matthews_corrcoef(actual,predictions))
+    t = np.sum(C, axis=1)
+    p = np.sum(C, axis = 0)
+    c = np.trace(C)
+    s = actual.shape[0]
+
+    numerator = (c*s) - np.dot(t, p)
+    den = np.sqrt((s**2 - np.sum(np.square(p))) * (s**2 - np.sum(np.square(t))))
+    mcc = numerator/den
+    print(mcc)
+    print(metric.matthews(C))
 #     print(matthews_corrcoef(actual, predictions))
 #     print(compute_MCC(actual, predictions, list(range(10))))
 # if __name__ == '__main__':
