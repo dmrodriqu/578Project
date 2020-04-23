@@ -22,7 +22,7 @@ def confusionMatrix(labels, predictions, normalized = False):
         cmat[labels[i]-1, predictions[i]-1]+= 1
     if normalized:
         for i in range(len(cmat)):
-            cmat[i] /= counts[i+1]
+            cmat[i] /= counts[i]
     return cmat
 
 '''

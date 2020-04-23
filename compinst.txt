@@ -1,0 +1,11 @@
+The code requires the following:
+Python version 3.7
+
+Libraries required:
+1. scikit-learn
+2. PyTorch
+3. numpy
+4. statsmodels (to get the critical probability values for Tukey's HSD)
+5. matplotlib
+
+Kindly have the folder data within the folder containing the code files.
