@@ -15,6 +15,7 @@ from sklearn.svm import SVC, LinearSVC
 import nnet
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import neural_network
+import matplotlib.pyplot as plt
 
 
 def post_tuning(train_data, train_labels, test_data, num_classes, classifiers, mcc_matrix):
@@ -32,6 +33,14 @@ def post_tuning(train_data, train_labels, test_data, num_classes, classifiers, m
     ofile.write('predictions:\n' + ','.join([str(i) for i in predictions]) + '\n\n')
     ofile.write('actual labels:\n' + ','.join([str(i) for i in test_data['label']]) + '\n\n')
     ofile.close()
+    matrixOfConfusion = confusionMatrix(test_data['label'], predictions, normalized = True)
+    fig, ax = plt.subplots()
+    pos = ax.imshow(matrixOfConfusion, cmap = 'Blues', interpolation = None)
+    ax.set_title("Confusion Matrix of Current Algorithm")
+    ax.set_ylabel("Ground Truth")
+    ax.set_xlabel("Predictions")
+    fig.colorbar(pos, ax=ax)
+    plt.show()
     mcc = compute_MCC(test_data['label'], predictions, list(range(num_classes)))
     print("The Mathew's correlation coefficient for this classifier on the test dataset is: ", mcc)
 
@@ -44,8 +53,8 @@ def run():
     args = parser.parse_args()
 
     data, val_data, data_labels, val_labels = ld.trainvalsplit('train')  # train and validation datasets
-    train_data = np.concatenate((data, val_data), axis=0)
-    train_labels = np.concatenate((data_labels, val_labels), axis=0)
+    train_data = np.concatenate((data, val_data), axis=0)[:100]
+    train_labels = np.concatenate((data_labels, val_labels), axis=0)[:100]
     test_data = ld.trainvalsplit('test')   # test set
     num_classes = 10
     k = 5   # number of folds
