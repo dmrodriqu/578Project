@@ -26,6 +26,12 @@ def post_tuning(train_data, train_labels, test_data, num_classes, classifiers, m
     classifiers[best_ind].fit(train_data, train_labels)
     print('training done. Now we shall evaluate this trained classifier on the test dataset')
     predictions = classifiers[best_ind].predict(test_data['data'])
+    # write predictions and actual labels to a file #
+    ofile = open('final_output.txt', 'w+')
+    ofile.write('This file has the actual labels and predicted labels for the test set\n\n')
+    ofile.write('predictions:\n' + ','.join([str(i) for i in predictions]) + '\n\n')
+    ofile.write('actual labels:\n' + ','.join([str(i) for i in test_data['label']]) + '\n\n')
+    ofile.close()
     mcc = compute_MCC(test_data['label'], predictions, list(range(num_classes)))
     print("The Mathew's correlation coefficient for this classifier on the test dataset is: ", mcc)
 
@@ -46,10 +52,9 @@ def run():
     #################################################################
     tsize = 100     # just
     ##################################################################
-    args.option = 3
     if args.option == 1:    # run SVM
         print('SVM classifiers chosen. Tuning hyperparameters. \n'
-              'All results shall be written to the output file.')
+              'All results shall be appended to the output file.')
         classifiers = []
         for c in range(1,7):
             for deg in range(1,7):
@@ -62,7 +67,7 @@ def run():
 
     elif args.option == 2:  # run Neural Network classifiers
         print('Neural Network classifiers chosen. Tuning hyperparameters. \n'
-              'All results shall be written to the output file chosen')
+              'All results shall be appended to the output file.')
         classifiers = []
         nnet_sizes = [[100], [200], [300], [400], [500],
                       [300, 200], [300, 100], [500, 200], [500, 100], [128, 64]]
@@ -77,7 +82,7 @@ def run():
 
     elif args.option == 3:  # run KNN classifiers
         print('KNN classifiers chosen. Tuning hyperparameters. \n'
-              'All results shall be written to the output file.')
+              'All results shall be appended to the output file.')
         classifiers = []
         for i in range(1, 16):
             cf = KNeighborsClassifier(n_neighbors=i, n_jobs=-1)
